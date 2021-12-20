@@ -1,0 +1,3 @@
+/home/jane/Documents/Projects/pixel-logic/build/CMakeFiles/rebuild_cache.dir
+/home/jane/Documents/Projects/pixel-logic/build/CMakeFiles/edit_cache.dir
+/home/jane/Documents/Projects/pixel-logic/build/CMakeFiles/pixel-logic.dir
