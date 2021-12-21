@@ -1106,6 +1106,18 @@
 			"value" : "FALSE"
 		},
 		{
+			"name" : "SDL2_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "The directory containing a CMake configuration file for SDL2."
+				}
+			],
+			"type" : "PATH",
+			"value" : "/usr/local/lib/cmake/SDL2"
+		},
+		{
 			"name" : "pixel-logic_BINARY_DIR",
 			"properties" : 
 			[

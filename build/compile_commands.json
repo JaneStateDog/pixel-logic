@@ -1,7 +1,7 @@
 [
 {
   "directory": "/home/jane/Documents/Projects/pixel-logic/build",
-  "command": "/bin/x86_64-linux-gnu-g++-9    -g   -std=gnu++14 -o CMakeFiles/pixel-logic.dir/src/main.cpp.o -c /home/jane/Documents/Projects/pixel-logic/src/main.cpp",
+  "command": "/bin/x86_64-linux-gnu-g++-9   -I/usr/local/include/SDL2  -g   -std=gnu++14 -o CMakeFiles/pixel-logic.dir/src/main.cpp.o -c /home/jane/Documents/Projects/pixel-logic/src/main.cpp",
   "file": "/home/jane/Documents/Projects/pixel-logic/src/main.cpp"
 }
 ]
