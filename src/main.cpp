@@ -2,7 +2,7 @@
 
 #include <cmath>
 #include <iostream>
-#include <map>
+#include <vector>
 
 
 #define BASE_WIDTH 128
@@ -18,7 +18,8 @@ typedef struct {
       Uint8 B;
       Uint8 A;
 
-      int size;
+      int x;
+      int y;
 } Pixel;
 
 
@@ -43,7 +44,7 @@ int main() {
 
       int holding = 0;
 
-      std::map<std::pair<int, int>, Pixel> pixels;
+      std::vector<Pixel> pixels;
 
       while (true) {
             // Clear screen
@@ -69,8 +70,6 @@ int main() {
                               gameWidth = BASE_WIDTH * zoom;
                               gameHeight = BASE_HEIGHT * zoom;
 
-                              std::cout << zoom << std::endl;
-
                               SDL_RenderSetLogicalSize(drawingRenderer, gameWidth, gameHeight);
 
                               break;
@@ -87,14 +86,24 @@ int main() {
 
                         switch (holding) {
                               case SDL_BUTTON_LEFT:  {
-                                    Pixel pixel = {(Uint8)(std::rand() % 255), (Uint8)(std::rand() % 255), (Uint8)(std::rand() % 255), 255, zoom};
-                                    pixels[std::make_pair(mouseX, mouseY)] = pixel;
+                                    Uint8 R = (Uint8)(std::rand() % 255);
+                                    Uint8 G = (Uint8)(std::rand() % 255);
+                                    Uint8 B = (Uint8)(std::rand() % 255);
+                                    Uint8 A = (Uint8)(std::rand() % 255);
+                                    for (int x = 0; x < zoom; x++) { for (int y = 0; y < zoom; y++) {
+                                          pixels.push_back({R, B, G, A, mouseX + x, mouseY + y});
+                                    } }
                                     
                                     break;
                               }
 
                               case SDL_BUTTON_RIGHT:
-                                    pixels.erase(std::make_pair(mouseX, mouseY));
+                                    for (int x = 0; x < zoom; x++) { for (int y = 0; y < zoom; y++) {
+                                          std::remove_if(pixels.begin(), pixels.end(), [mouseX, mouseY, x, y](Pixel pixel) {
+                                                return pixel.x == mouseX + x && pixel.y == mouseY + y;
+                                          });
+                                    } }
+                                    
                                     break;
                         }
                   }
@@ -102,14 +111,11 @@ int main() {
 
 
             // Draw
-            for (auto &pair : pixels) {
-                  std::pair<int, int> pos = pair.first;
-                  Pixel pixel = pair.second;
-
-                  SDL_SetRenderDrawColor(drawingRenderer, pixel.R, pixel.G, pixel.B, pixel.A);
-
-                  SDL_Rect rect = {pos.first, pos.second, pixel.size, pixel.size};
-                  SDL_RenderFillRect(drawingRenderer, &rect);
+            for (auto &pixel : pixels) {
+                  if (pixel.x < gameWidth && pixel.x >= 0 && pixel.y < gameHeight && pixel.y >= 0) {
+                        SDL_SetRenderDrawColor(drawingRenderer, pixel.R, pixel.G, pixel.B, pixel.A);
+                        SDL_RenderDrawPoint(drawingRenderer, pixel.x, pixel.y);
+                  }
             }
 
             SDL_RenderPresent(drawingRenderer);
