@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <map>
 
 
 #define GAME_WIDTH 128
@@ -9,6 +10,14 @@
 
 #define WINDOW_WIDTH GAME_WIDTH * 3
 #define WINDOW_HEIGHT GAME_HEIGHT * 3
+
+
+typedef struct {
+      Uint8 R;
+      Uint8 G;
+      Uint8 B;
+      Uint8 A;
+} Pixel;
 
 
 int main() {
@@ -25,15 +34,15 @@ int main() {
       SDL_RenderSetLogicalSize(drawingRenderer, GAME_WIDTH, GAME_HEIGHT);
 
 
-      bool holding = false;
+      int holding = 0;
       int size = 1;
+
+      std::map<std::pair<int, int>, Pixel> pixels;
 
       while (true) {
             // Clear screen
-            // SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-            // SDL_RenderClear(renderer);
-            // Since we only have a drawing renderer right now, which we do not want to clear
-            // there is no need for this code at this moment
+            SDL_SetRenderDrawColor(drawingRenderer, 0, 0, 0, 0);
+            SDL_RenderClear(drawingRenderer);
 
 
             // Events
@@ -44,10 +53,8 @@ int main() {
                   bool quit = false;
 
                   switch (event.type) {
-                        case SDL_MOUSEBUTTONDOWN:
-                              holding = true; break;
-                        case SDL_MOUSEBUTTONUP:
-                              holding = false; break;
+                        case SDL_MOUSEBUTTONDOWN: holding = event.button.button; break;
+                        case SDL_MOUSEBUTTONUP: holding = 0; break;
 
                         case SDL_MOUSEWHEEL:
                               if (event.wheel.y > 0) { size++; }
@@ -61,20 +68,37 @@ int main() {
 
                   if (quit) { break; }
 
-                  if (holding) {
-                        SDL_SetRenderDrawColor(drawingRenderer, std::rand() % 255, std::rand() % 255, std::rand() % 255, 255);
+                  if (holding != 0) {
+                        switch (holding) {
+                              case SDL_BUTTON_LEFT:  {
+                                    Pixel pixel = {(Uint8)(std::rand() % 255), (Uint8)(std::rand() % 255), (Uint8)(std::rand() % 255), 255};
+                                    for (int x = 0; x < size; x++) for (int y = 0; y < size; y++) {
+                                          pixels[std::make_pair(event.button.x + x, event.button.y + y)] = pixel;
+                                    }
+                                    
+                                    break;
+                              }
 
-                        SDL_Rect rect;
-                        rect.x = event.button.x; rect.y = event.button.y;
-                        rect.w = size; rect.h = size;
-                        SDL_RenderFillRect(drawingRenderer, &rect);
+                              case SDL_BUTTON_RIGHT:
+                                    pixels.erase(std::make_pair(event.button.x, event.button.y));
+                                    break;
+                        }
                   }
             }
 
 
             // Draw
+            for (auto &pair : pixels) {
+                  std::pair<int, int> pos = pair.first;
+                  Pixel RGBA = pair.second;
+
+                  SDL_SetRenderDrawColor(drawingRenderer, RGBA.R, RGBA.G, RGBA.B, RGBA.A);
+                  SDL_RenderDrawPoint(drawingRenderer, pos.first, pos.second);
+            }
+
             SDL_RenderPresent(drawingRenderer);
       }
+
 
       SDL_DestroyRenderer(drawingRenderer);
 

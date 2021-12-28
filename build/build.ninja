@@ -63,7 +63,7 @@ build cmake_object_order_depends_target_pixel-logic: phony || CMakeFiles/pixel-l
 
 build CMakeFiles/pixel-logic.dir/src/main.cpp.o: CXX_COMPILER__pixel-logic ../src/main.cpp || cmake_object_order_depends_target_pixel-logic
   DEP_FILE = CMakeFiles/pixel-logic.dir/src/main.cpp.o.d
-  FLAGS = -g   -std=gnu++14
+  FLAGS = -g   -std=gnu++2a
   INCLUDES = -I/usr/local/include/SDL2
   OBJECT_DIR = CMakeFiles/pixel-logic.dir
   OBJECT_FILE_DIR = CMakeFiles/pixel-logic.dir/src
