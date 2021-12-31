@@ -43,9 +43,6 @@
 			[
 				{
 					"fragment" : "-g  "
-				},
-				{
-					"fragment" : "-std=gnu++2a"
 				}
 			],
 			"includes" : 
@@ -55,7 +52,7 @@
 					"path" : "/usr/local/include/SDL2"
 				}
 			],
-			"language" : "CXX",
+			"language" : "C",
 			"sourceIndexes" : 
 			[
 				0
@@ -80,7 +77,7 @@
 				"role" : "libraries"
 			}
 		],
-		"language" : "CXX"
+		"language" : "C"
 	},
 	"name" : "pixel-logic",
 	"nameOnDisk" : "pixel-logic",
@@ -104,7 +101,7 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "src/main.cpp",
+			"path" : "src/main.c",
 			"sourceGroupIndex" : 0
 		}
 	],

@@ -20,21 +20,21 @@ rule CUSTOM_COMMAND
 
 
 #############################################
-# Rule for compiling CXX files.
+# Rule for compiling C files.
 
-rule CXX_COMPILER__pixel-logic
+rule C_COMPILER__pixel-logic
   depfile = $DEP_FILE
   deps = gcc
-  command = /bin/x86_64-linux-gnu-g++-9  $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
-  description = Building CXX object $out
+  command = /bin/x86_64-linux-gnu-gcc-9 $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out   -c $in
+  description = Building C object $out
 
 
 #############################################
-# Rule for linking CXX executable.
+# Rule for linking C executable.
 
-rule CXX_EXECUTABLE_LINKER__pixel-logic
-  command = $PRE_LINK && /bin/x86_64-linux-gnu-g++-9  $FLAGS  $LINK_FLAGS $in  -o $TARGET_FILE $LINK_PATH $LINK_LIBRARIES && $POST_BUILD
-  description = Linking CXX executable $TARGET_FILE
+rule C_EXECUTABLE_LINKER__pixel-logic
+  command = $PRE_LINK && /bin/x86_64-linux-gnu-gcc-9 $FLAGS  $LINK_FLAGS $in  -o $TARGET_FILE $LINK_PATH $LINK_LIBRARIES && $POST_BUILD
+  description = Linking C executable $TARGET_FILE
   restat = $RESTAT
 
 
