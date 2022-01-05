@@ -12,21 +12,23 @@
 
 
 int main() {
+    int multiple = 1;
+
+
     // We allocate enough memory for a decent amount of pixels, for now
-    int pixelsSize = 32;
-    int pixelsUsed = 0;
+    int pixelsSize = (WIDTH * HEIGHT) * multiple;
     pixel *pixels = malloc(pixelsSize * sizeof(pixel));
     // As we zoom out and draw more pixels, we can use realloc to allocate the actual needed memory for this array
 
 
     SDL_Event event;
+    
     SDL_Init(SDL_INIT_VIDEO);
+    
     SDL_Window *window = SDL_CreateWindow("pixel-logic", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIN_WIDTH, WIN_HEIGHT, 0);
-    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0);
-    SDL_RenderSetLogicalSize(renderer, WIDTH, HEIGHT); // Not technically needed lol
 
+    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0); // Removed 'set logical renderer' because we are doing this differently and better now
 
-    bool holding = false;
 
     while (1) {
         // Clear the screen
@@ -42,8 +44,12 @@ int main() {
             int quit = 0;
 
             switch (event.type) {
-                case SDL_MOUSEBUTTONDOWN: holding = true; break;
-                case SDL_MOUSEBUTTONUP: holding = false; break;
+                case SDL_MOUSEWHEEL:
+                    if (event.wheel.y > 0) { multiple++; } 
+                    else if (event.wheel.y < 0) { multiple--; }
+                    if (multiple <= 0) { multiple = 1; }
+
+                    break;
 
                 case SDL_QUIT: quit = 1; break;
             }
@@ -52,21 +58,26 @@ int main() {
         }
 
 
-        if (holding) {
-            if (pixelsUsed == pixelsSize) {
-                pixelsSize *= 2;
+        int x;
+        int y;
+        Uint32 buttons = SDL_GetMouseState(&x, &y);
+        x /= (WIN_WIDTH / (WIDTH * multiple));
+        y /= (WIN_HEIGHT / (HEIGHT * multiple));
+
+        if ((buttons & SDL_BUTTON_LMASK) != 0) {
+            if ((WIDTH * multiple) * (HEIGHT * multiple) > pixelsSize) {
+                pixelsSize = (WIDTH * multiple) * (HEIGHT * multiple);
                 pixels = realloc(pixels, pixelsSize * sizeof(pixel));
             }
 
-            bool found = false;
-            for (int i = 0; i < pixelsSize; i++) {
-                pixel p = pixels[i];
-                if (p.x == event.button.x && p.y == event.button.y) { found = true; break; }
-            }
-            
-            if (!found) {
-                pixels[pixelsUsed++] = (pixel){.x = event.button.x, .y = event.button.y, .r = 250, .g = 20, .b = 20, .a = 100};
-            }
+            // pixels[(x * (WIDTH * multiple)) + y] = (pixel){.x = x, .y = y, .r = 255, .g = 255, .b = 255, .a = 255};
+
+            for (int ix = 0; ix < multiple; ix++) { for (int iy = 0; iy < multiple; iy++) {
+                int i = ((x + ix) * (WIDTH * multiple)) + (y + iy);
+                if (i < pixelsSize) {
+                    pixels[i] = (pixel){.x = (x + ix), .y = (y + iy), .r = 255, .g = 255, .b = 255, .a = 255};
+                }
+            } }
         }
 
 
@@ -76,15 +87,15 @@ int main() {
             pixel p = pixels[i];
 
             SDL_SetRenderDrawColor(renderer, p.r, p.g, p.b, p.a);
-            SDL_RenderDrawPoint(renderer, p.x, p.y);
+
+            SDL_RenderFillRect(renderer, &((SDL_Rect){.x = p.x * (WIN_WIDTH / (WIDTH * multiple)), .y = p.y * (WIN_HEIGHT / (HEIGHT * multiple)), .w = (WIN_WIDTH / (WIDTH * multiple)), .h = (WIN_HEIGHT / (HEIGHT * multiple))}));
         }
 
-        // ACTUALLY SET THE RENDERER AND DRAW THE FORKING THING YOU STOOPID MORON
         SDL_RenderPresent(renderer);
     }
 
 
-    // Free memory
+    // Free thingies
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
 
