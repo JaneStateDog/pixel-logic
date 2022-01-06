@@ -1,17 +1,21 @@
 #ifndef PIXEL
 #define PIXEL
 
-#include <SDL2/SDL.h>
+#include <stdint.h>
 
+
+typedef struct XY {
+    uint16_t x;
+    uint16_t y;
+} xy;
 
 typedef struct Pixel {
-    int x;
-    int y;
+    xy pos;
 
-    Uint16 r;
-    Uint16 g;
-    Uint16 b;
-    Uint16 a;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    uint8_t a; // If a pixel has an alpha of 0, we consider it invalid and it can be overwritten
 } pixel;
 
 
