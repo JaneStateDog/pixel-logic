@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "../../uthash/uthash.h"
+#include "../uthash.h"
 
 
 typedef struct XY {

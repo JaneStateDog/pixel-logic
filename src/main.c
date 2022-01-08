@@ -7,7 +7,7 @@
 #include <time.h>
 #include <math.h>
 #include <SDL2/SDL.h>
-#include "../uthash/uthash.h"
+#include "uthash.h"
 
 
 #define WIDTH 16 // Game width and height, also known as how many pixels can be on the screen with a multiple of 1
