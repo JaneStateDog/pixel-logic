@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "pixel.h": "c"
+        "pixel.h": "c",
+        "stdbool.h": "c"
     }
 }

@@ -7,6 +7,7 @@
 #include <time.h>
 #include <math.h>
 #include <SDL2/SDL.h>
+#include "../uthash/uthash.h"
 
 
 #define WIDTH 16 // Game width and height, also known as how many pixels can be on the screen with a multiple of 1
@@ -18,14 +19,6 @@
 int main() {
     // Initalize randomization
     srand(time(NULL));
-
-
-    // We allocate enough memory for a decent amount of pixels, for now
-    int pixelsSize = 100; // This number is not too important since it will automatically get expanded as more pixels are spawned in
-    int pixelsUsed = 0;
-    pixel **pixels = malloc(pixelsSize * sizeof(pixel*)); // An array of pointers to pixels
-    // As we zoom out and draw more pixels, we can use realloc to allocate the actual needed memory for this array
-    for (int i = 0; i < pixelsSize; i++) { pixels[i] = NULL; } // Initalize pixels to all nulls
 
 
     SDL_Event event;
@@ -73,15 +66,6 @@ int main() {
         }
 
 
-        // If we think we need it, allocate more memory for pixels
-        if (pixelsUsed + multiple > pixelsSize) {
-            pixelsSize += (multiple * multiple) * 2;
-
-            pixel **tPixels = realloc(pixels, pixelsSize * sizeof(pixel*));
-            if (tPixels != NULL) { pixels = tPixels; }
-        } // Write code VERY soon that will go through the pixels, find null ones, shift the array so they go away, then reallocate the array so it only uses the memory needed
-
-
         int x;
         int y;
         Uint32 buttons = SDL_GetMouseState(&x, &y);
@@ -90,41 +74,23 @@ int main() {
         int relX = round(x / (WIN_WIDTH / (WIDTH * multiple)));
         int relY = round(y / (WIN_HEIGHT / (HEIGHT * multiple)));
 
-        if ((buttons & SDL_BUTTON_LMASK) != 0 && x != lastX && y != lastY) { // Check that we hit the left click button and the mouse has moved since last frame
-            // Place the pixels in
-            int l = 0;
-            //for (int ix = 0; ix < multiple; ix++) { for (int iy = 0; iy < multiple; iy++) {
-            int ix = 0;
-            int iy = 0;
-            // Test that there isn't already a pixel placed where we are trying to place one
-            bool found = false;
-            for (int i = 0; i < pixelsSize; i++) {
-                if (pixels[i] != NULL && cmp_xy(pixels[i]->pos, (xy){.x = relX + ix, .y = relY + iy}) == true) {
-                    found = true; break;
-                }
+        // Get the x and y position that is relative to the game world and snapped to the grid according to multiple
+        uint16_t snappedX = round(relX / multiple) * multiple;
+        uint16_t snappedY = round(relY / multiple) * multiple;
+
+        if (x != lastX && y != lastY) { // Check that the mouse has moved since the last frame
+            if ((buttons & SDL_BUTTON_LMASK) != 0) {
+                // Place pixels
+                rgba color = {.r = rand() % 256, .g = rand() % 256, .b = rand() % 256, .a = rand() % 256};
+                for (int ix = 0; ix < multiple; ix++) { for (int iy = 0; iy < multiple; iy++) {
+                    insert_pixel((xy){.x = snappedX + ix, .y = snappedY + iy}, color);
+                } }
+            } else if ((buttons & SDL_BUTTON_RMASK) != 0) {
+                // Delete pixels
+                for (int ix = 0; ix < multiple; ix++) { for (int iy = 0; iy < multiple; iy++) {
+                    delete_pixel((xy){.x = snappedX + ix, .y = snappedY + iy});
+                } }
             }
-            if (found == true) { continue; }
-
-            // Shift all pixels back the needed amount
-            for (int i = pixelsSize - 1; i >= 0; i--) {
-                if (i > pixelsSize) { continue; }
-                if (pixels[i] != NULL) { 
-                    pixels[i + 1] = pixels[i];
-                    pixels[i] = NULL;
-                }
-            }
-
-            // Place the pixel
-            pixels[l] = &((pixel){.pos = {.x = relX + ix, .y = relY + iy}, .r = rand() % 256, .g = rand() % 256, .b = rand() % 256, .a = 255});
-            printf("%d:%d\n", pixels[l]->pos.x, pixels[l]->pos.y);
-            if (pixels[l] == NULL) { printf("is null"); }
-            // Using 256 on the rands because rand goes between 0 and the modulo value, so the maximum value this will get to is 255, which is what we want
-            l++;
-
-            pixelsUsed++;
-            //} }
-
-            printf("Bytes allocated for the pixels array: %d\nBytes used for pixels: %d\n", pixelsSize * (int)sizeof(pixel*), pixelsUsed * (int)sizeof(pixel*));
 
             lastX = x;
             lastY = y;
@@ -133,12 +99,9 @@ int main() {
 
         // Draw
         // Pixels
-        for (int i = 0; i < pixelsSize; i++) {
-            if (pixels[i] == NULL) { continue; }
-            pixel *p = pixels[i];
-            //printf("am drawing %d:%d:%d:%d:%d:%d\n", p->pos.x, p->pos.y, p->r, p->g, p->b, p->a);
-
-            SDL_SetRenderDrawColor(renderer, p->r, p->g, p->b, p->a);
+        pixel *p;
+        for (p = pixels; p != NULL; p = p->hh.next) { // This is how uthash iterates through hashetables
+            SDL_SetRenderDrawColor(renderer, p->color.r, p->color.g, p->color.b, p->color.a);
 
             int winWidthConversion = round(WIN_WIDTH / (WIDTH * multiple));
             int winHeightConversion = round(WIN_HEIGHT / (HEIGHT * multiple));
