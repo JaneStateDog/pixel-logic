@@ -1,7 +1,7 @@
+#include "globals/globals.h"
 #include "pixel/pixel.h"
 
 #include <stdio.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <time.h>
@@ -10,29 +10,24 @@
 #include "uthash.h"
 
 
-#define WIDTH 16 // Game width and height, also known as how many pixels can be on the screen with a multiple of 1
-#define HEIGHT 9
-#define WIN_WIDTH 1280
-#define WIN_HEIGHT 720
-
-
-int main() {
+int main() { 
     // Initalize randomization
     srand(time(NULL));
 
 
     SDL_Event event;
-    
-    SDL_Init(SDL_INIT_VIDEO);
-    
+    SDL_Init(SDL_INIT_VIDEO);    
     SDL_Window *window = SDL_CreateWindow("pixel-logic", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIN_WIDTH, WIN_HEIGHT, 0);
-
-    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0); // Removed 'set logical renderer' because we are doing this differently and better now
-    int multiple = 1;
+    renderer = SDL_CreateRenderer(window, -1, 0);
 
 
-    int lastX;
-    int lastY;
+    insert_chip((SDL_Point){.x = 3, .y = 3}, AND);
+    insert_chip((SDL_Point){.x = 7, .y = 3}, OR);
+    insert_chip((SDL_Point){.x = 3, .y = 6}, NOT);
+    insert_chip((SDL_Point){.x = 7, .y = 6}, BUTTON);
+
+
+    SDL_Point lastPos;
 
     while (1) {
         // Events
@@ -62,56 +57,53 @@ int main() {
                 case SDL_QUIT: quit = 1; break;
             }
 
-            if (quit == true) { break; }
+            if (quit == SDL_TRUE) { break; }
         }
 
 
-        int x;
-        int y;
-        Uint32 buttons = SDL_GetMouseState(&x, &y);
+        SDL_Point pos;
+        Uint32 buttons = SDL_GetMouseState(&pos.x, &pos.y);
 
-        // Get the x and y position relative to the game world
-        int relX = round(x / (WIN_WIDTH / (WIDTH * multiple)));
-        int relY = round(y / (WIN_HEIGHT / (HEIGHT * multiple)));
+        // Get the pos relative to the game world
+        SDL_Point relPos = {.x = round(pos.x / (WIN_WIDTH / (WIDTH * multiple))), .y = round(pos.y / (WIN_HEIGHT / (HEIGHT * multiple)))};
 
-        // Get the x and y position that is relative to the game world and snapped to the grid according to multiple
-        uint16_t snappedX = round(relX / multiple) * multiple;
-        uint16_t snappedY = round(relY / multiple) * multiple;
+        // Get the pos that is relative to the game world and snapped to the grid according to multiple
+        SDL_Point snappedPos = {.x = round(relPos.x / multiple) * multiple, .y = round(relPos.y / multiple) * multiple};
 
-        if (x != lastX && y != lastY) { // Check that the mouse has moved since the last frame
+        if (pos.x != lastPos.x && pos.y != lastPos.y) { // Check that the mouse has moved since the last frame
             if ((buttons & SDL_BUTTON_LMASK) != 0) {
                 // Place pixels
-                rgba color = {.r = rand() % 256, .g = rand() % 256, .b = rand() % 256, .a = rand() % 256};
                 for (int ix = 0; ix < multiple; ix++) { for (int iy = 0; iy < multiple; iy++) {
-                    insert_pixel((xy){.x = snappedX + ix, .y = snappedY + iy}, color);
+                    insert_pixel((SDL_Point){.x = snappedPos.x + ix, .y = snappedPos.y + iy}, DEFAULT_PIXEL_COLOR);
                 } }
             } else if ((buttons & SDL_BUTTON_RMASK) != 0) {
                 // Delete pixels
                 for (int ix = 0; ix < multiple; ix++) { for (int iy = 0; iy < multiple; iy++) {
-                    delete_pixel((xy){.x = snappedX + ix, .y = snappedY + iy});
+                    delete_pixel((SDL_Point){.x = snappedPos.x + ix, .y = snappedPos.y + iy});
                 } }
             }
 
-            lastX = x;
-            lastY = y;
+            lastPos = pos;
         }
 
 
         // Draw
-        // Pixels
-        pixel *p;
-        for (p = pixels; p != NULL; p = p->hh.next) { // This is how uthash iterates through hashetables
-            SDL_SetRenderDrawColor(renderer, p->color.r, p->color.g, p->color.b, p->color.a);
-
-            int winWidthConversion = round(WIN_WIDTH / (WIDTH * multiple));
-            int winHeightConversion = round(WIN_HEIGHT / (HEIGHT * multiple));
-
-            SDL_RenderFillRect(renderer, &((SDL_Rect){.x = p->pos.x * winWidthConversion, .y = p->pos.y * winHeightConversion, 
-                                            .w = winWidthConversion, .h = winHeightConversion}));
+        // Chips
+        chip *c;
+        for (c = chips; c != NULL; c = c->hh.next) { // This is how uthash iterates through hashetables, it's wack but really cool at the same time
+            draw_chip(c);
         }
 
-        // Present the buffered rendering data to the screen, then clear the buffer
+        // Pixels
+        pixel *p;
+        for (p = pixels; p != NULL; p = p->hh.next) { // It's so wackyyy
+            draw_pixel(p);
+        }
+
+        // Present the buffered rendering data to the screen
         SDL_RenderPresent(renderer);
+
+        // Clear the rendering buffer
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
         SDL_RenderClear(renderer);
     }

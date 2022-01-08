@@ -7,6 +7,12 @@
 
 {
   "directory": "/home/jane/Documents/Projects/pixel-logic/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-9  -I/usr/local/include/SDL2  -g   -o CMakeFiles/pixel-logic.dir/src/globals/globals.c.o   -c /home/jane/Documents/Projects/pixel-logic/src/globals/globals.c",
+  "file": "/home/jane/Documents/Projects/pixel-logic/src/globals/globals.c"
+},
+
+{
+  "directory": "/home/jane/Documents/Projects/pixel-logic/build",
   "command": "/bin/x86_64-linux-gnu-gcc-9  -I/usr/local/include/SDL2  -g   -o CMakeFiles/pixel-logic.dir/src/pixel/pixel.c.o   -c /home/jane/Documents/Projects/pixel-logic/src/pixel/pixel.c",
   "file": "/home/jane/Documents/Projects/pixel-logic/src/pixel/pixel.c"
 }
