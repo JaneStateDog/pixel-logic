@@ -68,6 +68,13 @@ build CMakeFiles/pixel-logic.dir/src/main.c.o: C_COMPILER__pixel-logic ../src/ma
   OBJECT_DIR = CMakeFiles/pixel-logic.dir
   OBJECT_FILE_DIR = CMakeFiles/pixel-logic.dir/src
 
+build CMakeFiles/pixel-logic.dir/src/pixel/pixel.c.o: C_COMPILER__pixel-logic ../src/pixel/pixel.c || cmake_object_order_depends_target_pixel-logic
+  DEP_FILE = CMakeFiles/pixel-logic.dir/src/pixel/pixel.c.o.d
+  FLAGS = -g
+  INCLUDES = -I/usr/local/include/SDL2
+  OBJECT_DIR = CMakeFiles/pixel-logic.dir
+  OBJECT_FILE_DIR = CMakeFiles/pixel-logic.dir/src/pixel
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target pixel-logic
@@ -76,7 +83,7 @@ build CMakeFiles/pixel-logic.dir/src/main.c.o: C_COMPILER__pixel-logic ../src/ma
 #############################################
 # Link the executable pixel-logic
 
-build pixel-logic: C_EXECUTABLE_LINKER__pixel-logic CMakeFiles/pixel-logic.dir/src/main.c.o
+build pixel-logic: C_EXECUTABLE_LINKER__pixel-logic CMakeFiles/pixel-logic.dir/src/main.c.o CMakeFiles/pixel-logic.dir/src/pixel/pixel.c.o
   FLAGS = -g
   LINK_LIBRARIES = -L/usr/local/lib -Wl,-rpath,/usr/local/lib -Wl,--enable-new-dtags -lSDL2
   OBJECT_DIR = CMakeFiles/pixel-logic.dir

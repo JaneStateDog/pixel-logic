@@ -1,8 +1,9 @@
-#include "pixel.h"
+#include "pixel/pixel.h"
 
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <time.h>
 #include <math.h>
 #include <SDL2/SDL.h>
@@ -20,10 +21,11 @@ int main() {
 
 
     // We allocate enough memory for a decent amount of pixels, for now
-    int pixelsSize = WIDTH * HEIGHT; // This number is not too important since it will automatically get expanded as more pixels are spawned in
+    int pixelsSize = 100; // This number is not too important since it will automatically get expanded as more pixels are spawned in
     int pixelsUsed = 0;
-    pixel *pixels = malloc(pixelsSize * sizeof(pixel));
+    pixel **pixels = malloc(pixelsSize * sizeof(pixel*)); // An array of pointers to pixels
     // As we zoom out and draw more pixels, we can use realloc to allocate the actual needed memory for this array
+    for (int i = 0; i < pixelsSize; i++) { pixels[i] = NULL; } // Initalize pixels to all nulls
 
 
     SDL_Event event;
@@ -75,7 +77,7 @@ int main() {
         if (pixelsUsed + multiple > pixelsSize) {
             pixelsSize += (multiple * multiple) * 2;
 
-            pixel *tPixels = realloc(pixels, pixelsSize * sizeof(pixel));
+            pixel **tPixels = realloc(pixels, pixelsSize * sizeof(pixel*));
             if (tPixels != NULL) { pixels = tPixels; }
         } // Write code VERY soon that will go through the pixels, find null ones, shift the array so they go away, then reallocate the array so it only uses the memory needed
 
@@ -92,35 +94,37 @@ int main() {
             // Place the pixels in
             int l = 0;
             //for (int ix = 0; ix < multiple; ix++) { for (int iy = 0; iy < multiple; iy++) {
-            for (int ix = 0; ix < 1; ix++) { for (int iy = 0; iy < 1; iy++) {
-                // Test that there isn't already a pixel placed where we are trying to place one
-                bool found = false;
-                for (int i = 0; i < pixelsSize; i++) {
-                    if (pixels[i].a != 0 && pixels[i].pos.x == relX + ix && pixels[i].pos.y == relY + iy) {
-                        found = true;
-                        break;
-                    }
+            int ix = 0;
+            int iy = 0;
+            // Test that there isn't already a pixel placed where we are trying to place one
+            bool found = false;
+            for (int i = 0; i < pixelsSize; i++) {
+                if (pixels[i] != NULL && cmp_xy(pixels[i]->pos, (xy){.x = relX + ix, .y = relY + iy}) == true) {
+                    found = true; break;
                 }
-                if (found == true) { continue; }
+            }
+            if (found == true) { continue; }
 
-                // Shift all pixels back the needed amount
-                for (int i = pixelsSize - 1; i >= 0; i--) {
-                    if (i > pixelsSize) { continue; }
-                    if (pixels[i].a != 0) { 
-                        pixels[i + 1] = pixels[i]; 
-                        pixels[i].a = 0; // Even though it will most likely get written over, I think it's good practice to clear this (I think??)
-                    }
+            // Shift all pixels back the needed amount
+            for (int i = pixelsSize - 1; i >= 0; i--) {
+                if (i > pixelsSize) { continue; }
+                if (pixels[i] != NULL) { 
+                    pixels[i + 1] = pixels[i];
+                    pixels[i] = NULL;
                 }
+            }
 
-                // Place the pixel
-                pixels[l] = (pixel){.pos = {.x = relX + ix, .y = relY + iy}, .r = rand() % 256, .g = rand() % 256, .b = rand() % 256, .a = 255}; 
-                // Using 256 on the rands because rand goes between 0 and the modulo value, so the maximum value this will get to is 255, which is what we want
-                l++;
+            // Place the pixel
+            pixels[l] = &((pixel){.pos = {.x = relX + ix, .y = relY + iy}, .r = rand() % 256, .g = rand() % 256, .b = rand() % 256, .a = 255});
+            printf("%d:%d\n", pixels[l]->pos.x, pixels[l]->pos.y);
+            if (pixels[l] == NULL) { printf("is null"); }
+            // Using 256 on the rands because rand goes between 0 and the modulo value, so the maximum value this will get to is 255, which is what we want
+            l++;
 
-                pixelsUsed++;
-            } }
+            pixelsUsed++;
+            //} }
 
-            printf("Bytes allocated for the pixels array: %d\nBytes used for pixels: %d\n", pixelsSize * (int)sizeof(pixel), pixelsUsed * (int)sizeof(pixel));
+            printf("Bytes allocated for the pixels array: %d\nBytes used for pixels: %d\n", pixelsSize * (int)sizeof(pixel*), pixelsUsed * (int)sizeof(pixel*));
 
             lastX = x;
             lastY = y;
@@ -130,15 +134,16 @@ int main() {
         // Draw
         // Pixels
         for (int i = 0; i < pixelsSize; i++) {
-            pixel p = pixels[i];
-            if (p.a == 0) { continue; }
+            if (pixels[i] == NULL) { continue; }
+            pixel *p = pixels[i];
+            //printf("am drawing %d:%d:%d:%d:%d:%d\n", p->pos.x, p->pos.y, p->r, p->g, p->b, p->a);
 
-            SDL_SetRenderDrawColor(renderer, p.r, p.g, p.b, p.a);
+            SDL_SetRenderDrawColor(renderer, p->r, p->g, p->b, p->a);
 
             int winWidthConversion = round(WIN_WIDTH / (WIDTH * multiple));
             int winHeightConversion = round(WIN_HEIGHT / (HEIGHT * multiple));
 
-            SDL_RenderFillRect(renderer, &((SDL_Rect){.x = p.pos.x * winWidthConversion, .y = p.pos.y * winHeightConversion, 
+            SDL_RenderFillRect(renderer, &((SDL_Rect){.x = p->pos.x * winWidthConversion, .y = p->pos.y * winHeightConversion, 
                                             .w = winWidthConversion, .h = winHeightConversion}));
         }
 

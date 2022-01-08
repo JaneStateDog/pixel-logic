@@ -2,12 +2,15 @@
 #define PIXEL
 
 #include <stdint.h>
+#include <stdbool.h>
 
 
 typedef struct XY {
     uint16_t x;
     uint16_t y;
 } xy;
+bool cmp_xy(xy xy1, xy xy2);
+
 
 typedef struct Pixel {
     xy pos;
@@ -15,7 +18,7 @@ typedef struct Pixel {
     uint8_t r;
     uint8_t g;
     uint8_t b;
-    uint8_t a; // If a pixel has an alpha of 0, we consider it invalid and it can be overwritten
+    uint8_t a;
 } pixel;
 
 
