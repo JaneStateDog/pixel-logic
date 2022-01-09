@@ -21,13 +21,6 @@ int main() {
     renderer = SDL_CreateRenderer(window, -1, 0);
 
 
-    insert_chip((SDL_Point){.x = 3, .y = 3}, AND);
-    insert_chip((SDL_Point){.x = 7, .y = 3}, OR);
-    insert_chip((SDL_Point){.x = 3, .y = 6}, NOT);
-    insert_chip((SDL_Point){.x = 7, .y = 6}, BUTTON);
-    insert_chip((SDL_Point){.x = 9, .y = 6}, SR_LATCH);
-
-
     SDL_Point lastPos;
 
     while (1) {
@@ -84,32 +77,59 @@ int main() {
         SDL_bool rightClick = ((buttons & SDL_BUTTON_RMASK) != 0);
 
 
-        // Check if we clicked on a button
+        // This was the code for checking if we clicked on a button, but now it's that and the code
+        // for placing chips
         if (event.type == SDL_MOUSEBUTTONDOWN && leftClick) { // Check for left click, not hold
         // TODO make the mouse input system actually good
-            SDL_Point tPos = {.x = relPos.x, .y = relPos.y - 1};
-            // IT STANDS FOR TEMP POS I SWEAR GUYS OKAY PLEASE AHH
 
-            chip *c;
-            HASH_FIND(hh, chips, &tPos, sizeof(SDL_Point), c);
-            // We do this find by hand instead of with the function because that looks at every pixel in the
-            // chip and we only want one pixel
+            SDL_bool amPlacingChip = SDL_FALSE;
+            chip_types chipToPlace = AND;
+            
+            if (keyState[SDL_SCANCODE_1]) { amPlacingChip = SDL_TRUE; chipToPlace = BUTTON;}
+            if (keyState[SDL_SCANCODE_2]) { amPlacingChip = SDL_TRUE; chipToPlace = AND;}
+            if (keyState[SDL_SCANCODE_3]) { amPlacingChip = SDL_TRUE; chipToPlace = OR;}
+            if (keyState[SDL_SCANCODE_4]) { amPlacingChip = SDL_TRUE; chipToPlace = NOT;}
+            if (keyState[SDL_SCANCODE_5]) { amPlacingChip = SDL_TRUE; chipToPlace = SR_LATCH;}
 
-            if (c != NULL && c->type == BUTTON) {
-                pixel *p = find_pixel(tPos);
-                if (p != NULL) {
-                    if (c->memory[0] == SDL_TRUE) { c->memory[0] = SDL_FALSE; } else { c->memory[0] = SDL_TRUE; }
-                    recursive_change_pixel_state(p, c->memory[0]);
+
+            if (amPlacingChip == SDL_FALSE) {
+                SDL_Point tPos = {.x = relPos.x, .y = relPos.y - 1};
+                // IT STANDS FOR TEMP POS I SWEAR GUYS OKAY PLEASE AHH
+
+                chip *c;
+                HASH_FIND(hh, chips, &tPos, sizeof(SDL_Point), c);
+                // We do this find by hand instead of with the function because that looks at every pixel in the
+                // chip and we only want one pixel
+
+                if (c != NULL && c->type == BUTTON) {
+                    pixel *p = find_pixel(tPos);
+                    if (p != NULL) {
+                        if (c->memory[0] == SDL_TRUE) { c->memory[0] = SDL_FALSE; } else { c->memory[0] = SDL_TRUE; }
+                        recursive_change_pixel_state(p, c->memory[0]);
+                    }
                 }
+            } else {
+                insert_chip(relPos, chipToPlace);
             }
+        }
+
+        // Delete chip
+        if (event.type == SDL_MOUSEBUTTONDOWN && rightClick && keyState[SDL_SCANCODE_LSHIFT]) {
+            chip *c = find_chip(relPos, SDL_FALSE, NULL);
+            if (c != NULL) { HASH_DEL(chips, c); free(c); }
         }
 
         // Check that the mouse has moved since the last time we did an action
         if (pos.x != lastPos.x && pos.y != lastPos.y) {
             if (leftClick) {
+                // Figure out color using random key stuff we are using for testing because I am lazy
+                SDL_Color color = DEFAULT_PIXEL_COLOR;
+                if (keyState[SDL_SCANCODE_Q]) { color = PURPLE; }
+                if (keyState[SDL_SCANCODE_W]) { color = LIGHT_BLUE; }
+
                 // Place pixels
                 for (int ix = 0; ix < placeMultiple; ix++) { for (int iy = 0; iy < placeMultiple; iy++) {
-                    insert_pixel((SDL_Point){.x = snappedPos.x + ix, .y = snappedPos.y + iy}, DEFAULT_PIXEL_COLOR);
+                    insert_pixel((SDL_Point){.x = snappedPos.x + ix, .y = snappedPos.y + iy}, color);
                 } }
 
                 lastPos = pos;

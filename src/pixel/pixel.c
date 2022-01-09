@@ -68,9 +68,7 @@ void delete_pixel(SDL_Point pos) {
 
 void draw_pixel(pixel *p) {
     SDL_Color color = p->color;
-
     if (p->state == SDL_TRUE) { color = RED; }
-
     draw_point(p->pos, color);
 }
 
@@ -88,9 +86,19 @@ void recursive_change_pixel_state(pixel *p, SDL_bool state) {
         pixel *ps[4] = {find_pixel((SDL_Point){.x = p->pos.x + 1, .y = p->pos.y}), find_pixel((SDL_Point){.x = p->pos.x - 1, .y = p->pos.y}),
                         find_pixel((SDL_Point){.x = p->pos.x, .y = p->pos.y + 1}), find_pixel((SDL_Point){.x = p->pos.x, .y = p->pos.y - 1})};
 
+        pixel *ps2[4] = {find_pixel((SDL_Point){.x = p->pos.x + 2, .y = p->pos.y}), find_pixel((SDL_Point){.x = p->pos.x - 2, .y = p->pos.y}),
+                        find_pixel((SDL_Point){.x = p->pos.x, .y = p->pos.y + 2}), find_pixel((SDL_Point){.x = p->pos.x, .y = p->pos.y - 2})};
+
         for (int i = 0; i < 4; i++) {
-            if (ps[i] != NULL && ps[i]->state != state) {
-                recursive_change_pixel_state(ps[i], state);
+            if (ps[i] != NULL) {
+                if (p->color.r == ps[i]->color.r && p->color.g == ps[i]->color.g && p->color.b == ps[i]->color.b && p->color.a == ps[i]->color.a) {
+                    if (ps[i]->state != state) { recursive_change_pixel_state(ps[i], state); }
+                } else {
+                    if (ps2[i] != NULL && ps2[i]->state != state &&
+                        (p->color.r == ps2[i]->color.r && p->color.g == ps2[i]->color.g && p->color.b == ps2[i]->color.b && p->color.a == ps2[i]->color.a)) {
+                            recursive_change_pixel_state(ps2[i], state);
+                    }
+                }
             }
         }
     }

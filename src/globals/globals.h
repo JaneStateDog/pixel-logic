@@ -10,6 +10,8 @@
 #define GREEN (SDL_Color){.r = 0, .g = 255, .b = 0, .a = 255}
 #define BLUE (SDL_Color){.r = 0, .g = 0, .b = 255, .a = 255}
 #define GREY (SDL_Color){.r = 100, .g = 100, .b = 100, .a = 255}
+#define PURPLE (SDL_Color){.r = 85, .g = 0, .b = 154, .a = 255}
+#define LIGHT_BLUE (SDL_Color){.r = 0, .g = 255, .b = 255, .a = 255}
 
 
 #define WIDTH 16 // Game width and height, also known as how many pixels can be on the screen with a multiple of 1
