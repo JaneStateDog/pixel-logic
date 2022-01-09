@@ -19,7 +19,9 @@
 
 
 extern SDL_Renderer *renderer;
+
 extern int multiple;
+extern int placeMultiple;
 
 
 #endif

@@ -15,6 +15,8 @@ typedef struct {
 
     SDL_bool state; // on/true or off/false
 
+    SDL_bool touched;
+
     UT_hash_handle hh; // To make this structure hashable using uthash
 } pixel;
 pixel *find_pixel(SDL_Point pos);
@@ -67,11 +69,12 @@ typedef struct {
 
     UT_hash_handle hh; // To make this structure hashable
 } chip;
-chip *find_chip(SDL_Point pos, SDL_bool ignoreNonNulls);
+chip *find_chip(SDL_Point pos, SDL_bool ignoreNonNulls, SDL_Point *relativePos);
 void init_chip(chip *c);
 void insert_chip(SDL_Point pos, chip_types type);
 void delete_chip(SDL_Point pos);
 void draw_chip(chip *c);
+void update_chip(chip *c);
 
 // The chips hashtable
 extern chip *chips;

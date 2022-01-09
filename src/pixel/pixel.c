@@ -37,7 +37,7 @@ void insert_pixel(SDL_Point pos, SDL_Color color) {
     // Otherwise just readjust the data in the pixel
     if (p == NULL) {
         // Confirm the pixel we are trying to place is not on top of a chip
-        chip *c = find_chip(pos, SDL_TRUE);
+        chip *c = find_chip(pos, SDL_TRUE, NULL);
         if (c != NULL) { return; }
 
         // Create this new pixel and store a pointer to it
@@ -75,8 +75,15 @@ void draw_pixel(pixel *p) {
 }
 
 void recursive_change_pixel_state(pixel *p, SDL_bool state) {
+    if (p->touched == SDL_TRUE) { return; }
+
     if (p->state != state) {
         p->state = state;
+
+        p->touched = SDL_TRUE;
+
+        chip *c = find_chip(p->pos, SDL_FALSE, NULL);
+        if (c != NULL) { update_chip(c); }
 
         pixel *ps[4] = {find_pixel((SDL_Point){.x = p->pos.x + 1, .y = p->pos.y}), find_pixel((SDL_Point){.x = p->pos.x - 1, .y = p->pos.y}),
                         find_pixel((SDL_Point){.x = p->pos.x, .y = p->pos.y + 1}), find_pixel((SDL_Point){.x = p->pos.x, .y = p->pos.y - 1})};
@@ -93,7 +100,7 @@ void recursive_change_pixel_state(pixel *p, SDL_bool state) {
 // Initalize the chips hashtable as null
 chip *chips = NULL;
 
-chip *find_chip(SDL_Point pos, SDL_bool ignoreNonNulls) {
+chip *find_chip(SDL_Point pos, SDL_bool ignoreNonNulls, SDL_Point *relativePos) {
     // Look to see if there is a chip at the inputted position
     chip *c;
     HASH_FIND(hh, chips, &pos, sizeof(SDL_Point), c);
@@ -110,6 +117,10 @@ chip *find_chip(SDL_Point pos, SDL_bool ignoreNonNulls) {
                 if (ignoreNonNulls == SDL_TRUE) {
                     SDL_Color color = ic->body[pos.x - ic->pos.x][pos.y - ic->pos.y];
                     if (!(color.r == GREY.r && color.g == GREY.g && color.b == GREY.b && color.a == GREY.a)) { continue; }
+                }
+
+                if (relativePos != NULL) {
+                    relativePos = &((SDL_Point){.x = pos.x - ic->pos.x, .y = pos.y - ic->pos.y});
                 }
 
                 c = ic;
@@ -137,16 +148,16 @@ void init_chip(chip *c) {
 
             break;
         case AND:
-            c->body[0][0] = GREY; c->body[1][0] = BLUE; c->body[2][0] = GREY;
-            c->body[0][1] = GREEN; c->body[1][1] = GREY; c->body[2][1] = GREEN;
+            c->body[0][0] = GREY;   c->body[1][0] = BLUE;   c->body[2][0] = GREY;
+            c->body[0][1] = GREEN;  c->body[1][1] = GREY;   c->body[2][1] = GREEN;
             c->rect = (SDL_Rect){.w = 3, .h = 2};
 
             c->memory = NULL;
 
             break;
         case OR:
-            c->body[0][0] = GREY; c->body[1][0] = BLUE; c->body[2][0] = GREY;
-            c->body[0][1] = GREEN; c->body[1][1] = GREY; c->body[2][1] = GREEN;
+            c->body[0][0] = GREY;   c->body[1][0] = BLUE;   c->body[2][0] = GREY;
+            c->body[0][1] = GREEN;  c->body[1][1] = GREY;   c->body[2][1] = GREEN;
             c->rect = (SDL_Rect){.w = 3, .h = 2};
 
             c->memory = NULL;
@@ -162,8 +173,8 @@ void init_chip(chip *c) {
 
             break;
         case SR_LATCH:
-            c->body[0][0] = GREY; c->body[1][0] = BLUE; c->body[2][0] = GREY;
-            c->body[0][1] = GREEN; c->body[1][1] = GREY; c->body[2][1] = GREEN;
+            c->body[0][0] = GREY;   c->body[1][0] = BLUE;   c->body[2][0] = GREY;
+            c->body[0][1] = GREEN;  c->body[1][1] = GREY;   c->body[2][1] = GREEN;
             c->rect = (SDL_Rect){.w = 3, .h = 2};
 
             c->memory = calloc(1, sizeof(SDL_bool));
@@ -174,7 +185,7 @@ void init_chip(chip *c) {
 
 void insert_chip(SDL_Point pos, chip_types type) {
     // This whole function is an almost exact copy of insert_pixel, so I'm not going to bother commenting it since it will just be a copy most of the time
-    chip *c = find_chip(pos, SDL_FALSE);
+    chip *c = find_chip(pos, SDL_FALSE, NULL);
 
     if (c == NULL) {
         chip *c = calloc(1, sizeof(chip));
@@ -193,7 +204,7 @@ void insert_chip(SDL_Point pos, chip_types type) {
 
 void delete_chip(SDL_Point pos) {
     // Same case as insert_chip, this is basically the same as delete_pixel, so not much reason to write comments for it
-    chip *c = find_chip(pos, SDL_FALSE);
+    chip *c = find_chip(pos, SDL_FALSE, NULL);
 
     if (c != NULL) {
         HASH_DEL(chips, c);
@@ -205,4 +216,88 @@ void draw_chip(chip *c) {
     for (int ix = 0; ix < c->rect.w; ix++) { for (int iy = 0; iy < c->rect.h; iy++) {
         draw_point((SDL_Point){.x = c->pos.x + ix, .y = c->pos.y + iy}, c->body[ix][iy]);
     } }
+}
+
+void update_chip(chip *c) {
+    pixel *p1;
+    pixel *p2;
+
+    pixel *pOut;
+
+    SDL_bool one;
+    SDL_bool two;
+
+    switch (c->type) {
+        case AND:
+            p1 = find_pixel((SDL_Point){.x = c->pos.x, .y = c->pos.y + 1});
+            p2 = find_pixel((SDL_Point){.x = c->pos.x + 2, .y = c->pos.y + 1});
+
+            pOut = find_pixel((SDL_Point){.x = c->pos.x + 1, .y = c->pos.y});
+
+            if (pOut != NULL) {
+                one = SDL_FALSE;
+                two = SDL_FALSE;
+
+                if (p1 != NULL) { one = p1->state; }
+                if (p2 != NULL) { two = p2->state; }
+            
+                if (one == SDL_TRUE && two == SDL_TRUE) { recursive_change_pixel_state(pOut, SDL_TRUE); } else { recursive_change_pixel_state(pOut, SDL_FALSE); }
+            }
+
+            break;
+
+        case OR:
+            p1 = find_pixel((SDL_Point){.x = c->pos.x, .y = c->pos.y + 1});
+            p2 = find_pixel((SDL_Point){.x = c->pos.x + 2, .y = c->pos.y + 1});
+
+            pOut = find_pixel((SDL_Point){.x = c->pos.x + 1, .y = c->pos.y});
+
+            if (pOut != NULL) {
+                one = SDL_FALSE;
+                two = SDL_FALSE;
+
+                if (p1 != NULL) { one = p1->state; }
+                if (p2 != NULL) { two = p2->state; }
+            
+                if (one == SDL_TRUE || two == SDL_TRUE) { recursive_change_pixel_state(pOut, SDL_TRUE); } else { recursive_change_pixel_state(pOut, SDL_FALSE); }
+            }
+
+            break;
+
+        case NOT:
+            p1 = find_pixel((SDL_Point){.x = c->pos.x, .y = c->pos.y + 2});
+            pOut = find_pixel((SDL_Point){.x = c->pos.x, .y = c->pos.y});
+
+            if (pOut != NULL) {
+                if (p1 != NULL) { 
+                    if (p1->state == SDL_TRUE) { recursive_change_pixel_state(pOut, SDL_FALSE); } else { recursive_change_pixel_state(pOut, SDL_TRUE); }
+                } else { recursive_change_pixel_state(pOut, SDL_TRUE); }
+            }
+
+            break;
+
+        case SR_LATCH:
+            p1 = find_pixel((SDL_Point){.x = c->pos.x, .y = c->pos.y + 1});
+            p2 = find_pixel((SDL_Point){.x = c->pos.x + 2, .y = c->pos.y + 1});
+
+            pOut = find_pixel((SDL_Point){.x = c->pos.x + 1, .y = c->pos.y});
+
+            if (pOut != NULL) {
+                one = SDL_FALSE;
+                two = SDL_FALSE;
+
+                if (p1 != NULL) { one = p1->state; }
+                if (p2 != NULL) { two = p2->state; }
+            
+                if (two == SDL_TRUE) {
+                    c->memory[0] = SDL_FALSE;
+                    recursive_change_pixel_state(pOut, SDL_FALSE);
+                } else if (one == SDL_TRUE) {
+                    c->memory[0] = SDL_TRUE;
+                    recursive_change_pixel_state(pOut, SDL_TRUE);
+                }
+            }
+
+            break;
+    }
 }

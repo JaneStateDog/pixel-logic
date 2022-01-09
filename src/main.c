@@ -25,6 +25,7 @@ int main() {
     insert_chip((SDL_Point){.x = 7, .y = 3}, OR);
     insert_chip((SDL_Point){.x = 3, .y = 6}, NOT);
     insert_chip((SDL_Point){.x = 7, .y = 6}, BUTTON);
+    insert_chip((SDL_Point){.x = 9, .y = 6}, SR_LATCH);
 
 
     SDL_Point lastPos;
@@ -32,6 +33,8 @@ int main() {
     while (1) {
         // Events
         SDL_PumpEvents();
+
+        const Uint8 *keyState = SDL_GetKeyboardState(NULL);
 
         // If there is an event, do things
         if (SDL_PollEvent(&event)) {
@@ -41,16 +44,23 @@ int main() {
             // I'm sure there is a good reason for it, but I have not looked it up
             // That's why this is declared here
 
+            if (keyState[SDL_SCANCODE_LSHIFT]) {
+                tMultiple = placeMultiple;
+            } else { tMultiple = multiple; }
+
             switch (event.type) {
                 case SDL_MOUSEWHEEL:
                     if (event.wheel.y > 0) { tMultiple++; } 
                     else if (event.wheel.y < 0) { tMultiple--; }
 
                     if (tMultiple > 0 && HEIGHT * tMultiple < WIN_HEIGHT && WIDTH * tMultiple < WIN_WIDTH) { 
-                        multiple = tMultiple;
+                        if (keyState[SDL_SCANCODE_LSHIFT]) {
+                            placeMultiple = tMultiple;
+                        } else { multiple = tMultiple; }
                     }
 
                     printf("Multiple: %d\n", multiple);
+                    printf("Place multiple: %d\n", placeMultiple);
 
                     break;
 
@@ -67,8 +77,8 @@ int main() {
         // Get the pos relative to the game world
         SDL_Point relPos = {.x = round(pos.x / (WIN_WIDTH / (WIDTH * multiple))), .y = round(pos.y / (WIN_HEIGHT / (HEIGHT * multiple)))};
 
-        // Get the pos that is relative to the game world and snapped to the grid according to multiple
-        SDL_Point snappedPos = {.x = round(relPos.x / multiple) * multiple, .y = round(relPos.y / multiple) * multiple};
+        // Get the pos that is relative to the game world and snapped to the grid according to placeMultiple
+        SDL_Point snappedPos = {.x = round(relPos.x / placeMultiple) * placeMultiple, .y = round(relPos.y / placeMultiple) * placeMultiple};
 
         SDL_bool leftClick = ((buttons & SDL_BUTTON_LMASK) != 0);
         SDL_bool rightClick = ((buttons & SDL_BUTTON_RMASK) != 0);
@@ -88,7 +98,6 @@ int main() {
             if (c != NULL && c->type == BUTTON) {
                 pixel *p = find_pixel(tPos);
                 if (p != NULL) {
-                    // c->memory[0] != c->memory[0];
                     if (c->memory[0] == SDL_TRUE) { c->memory[0] = SDL_FALSE; } else { c->memory[0] = SDL_TRUE; }
                     recursive_change_pixel_state(p, c->memory[0]);
                 }
@@ -99,14 +108,14 @@ int main() {
         if (pos.x != lastPos.x && pos.y != lastPos.y) {
             if (leftClick) {
                 // Place pixels
-                for (int ix = 0; ix < multiple; ix++) { for (int iy = 0; iy < multiple; iy++) {
+                for (int ix = 0; ix < placeMultiple; ix++) { for (int iy = 0; iy < placeMultiple; iy++) {
                     insert_pixel((SDL_Point){.x = snappedPos.x + ix, .y = snappedPos.y + iy}, DEFAULT_PIXEL_COLOR);
                 } }
 
                 lastPos = pos;
             } else if (rightClick) {
                 // Delete pixels
-                for (int ix = 0; ix < multiple; ix++) { for (int iy = 0; iy < multiple; iy++) {
+                for (int ix = 0; ix < placeMultiple; ix++) { for (int iy = 0; iy < placeMultiple; iy++) {
                     delete_pixel((SDL_Point){.x = snappedPos.x + ix, .y = snappedPos.y + iy});
                 } }
 
@@ -126,6 +135,9 @@ int main() {
         pixel *p;
         for (p = pixels; p != NULL; p = p->hh.next) { // It's so wackyyy
             draw_pixel(p);
+
+            // I know this is a terrible place to put this but it fixes it so SHUSH
+            p->touched = SDL_FALSE;
         }
 
         // Present the buffered rendering data to the screen

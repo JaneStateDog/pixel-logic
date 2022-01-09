@@ -4,4 +4,6 @@
 
 
 SDL_Renderer *renderer;
+
 int multiple = 1;
+int placeMultiple = 1;
