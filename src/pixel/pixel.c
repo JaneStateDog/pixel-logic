@@ -74,6 +74,21 @@ void draw_pixel(pixel *p) {
     draw_point(p->pos, color);
 }
 
+void recursive_change_pixel_state(pixel *p, SDL_bool state) {
+    if (p->state != state) {
+        p->state = state;
+
+        pixel *ps[4] = {find_pixel((SDL_Point){.x = p->pos.x + 1, .y = p->pos.y}), find_pixel((SDL_Point){.x = p->pos.x - 1, .y = p->pos.y}),
+                        find_pixel((SDL_Point){.x = p->pos.x, .y = p->pos.y + 1}), find_pixel((SDL_Point){.x = p->pos.x, .y = p->pos.y - 1})};
+
+        for (int i = 0; i < 4; i++) {
+            if (ps[i] != NULL && ps[i]->state != state) {
+                recursive_change_pixel_state(ps[i], state);
+            }
+        }
+    }
+}
+
 
 // Initalize the chips hashtable as null
 chip *chips = NULL;
@@ -114,10 +129,11 @@ void init_chip(chip *c) {
     switch(c->type) {
         case BUTTON:
             c->body[0][0] = BLUE;
-            c->body[0][1] = RED;
+            c->body[0][1] = GREY;
             c->rect = (SDL_Rect){.w = 1, .h = 2};
 
-            c->memory = NULL;
+            c->memory = calloc(1, sizeof(SDL_bool));
+            c->memory[0] = SDL_FALSE;
 
             break;
         case AND:
@@ -150,7 +166,7 @@ void init_chip(chip *c) {
             c->body[0][1] = GREEN; c->body[1][1] = GREY; c->body[2][1] = GREEN;
             c->rect = (SDL_Rect){.w = 3, .h = 2};
 
-            c->memory = calloc(1, sizeof(SDL_bool)); // Using calloc because calloc will zero the elements, aka it will set the bools to false
+            c->memory = calloc(1, sizeof(SDL_bool));
 
             break;
     }
@@ -176,7 +192,7 @@ void insert_chip(SDL_Point pos, chip_types type) {
 }
 
 void delete_chip(SDL_Point pos) {
-    // Same case as insert_chip, this is basically the same as delete_pixel, so no reason to comment on it
+    // Same case as insert_chip, this is basically the same as delete_pixel, so not much reason to write comments for it
     chip *c = find_chip(pos, SDL_FALSE);
 
     if (c != NULL) {

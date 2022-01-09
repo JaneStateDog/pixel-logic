@@ -21,6 +21,7 @@ pixel *find_pixel(SDL_Point pos);
 void insert_pixel(SDL_Point pos, SDL_Color color);
 void delete_pixel(SDL_Point pos);
 void draw_pixel(pixel *p);
+void recursive_change_pixel_state(pixel *p, SDL_bool state);
 
 // The pixels hashtable
 extern pixel *pixels;
@@ -28,7 +29,7 @@ extern pixel *pixels;
 
 /*
     Base pixel/chip types:
-    - BUTTON (one output) (you can click on it to switch the output on and off. If you want it to act like a switch, you have to build that yourself using the SR_LATCH)
+    - BUTTON (one output) (more of a switch than a button, but eh (if we put actual buttons in later on this is going to be a pain in the butt))
     - AND (two inputs, one output)
     - OR (two inputs, one output)
     - NOT (one inputs, one output)
@@ -57,6 +58,7 @@ typedef struct {
     // we only use the first index of the arrary. The reason we use an array at all is in case in the future we need
     // other types of gates that use more bits of memory (even though there is no plan for that)
     // For gates that don't use memory, have this just go to NULL
+    // ACTUALLY a lot of that is a lie lel, BUTTON now uses a bit of memory since it's basicaly a switch haha sry future and past me(s?)
 
     SDL_Point pos;
     SDL_Rect rect;

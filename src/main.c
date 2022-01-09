@@ -70,20 +70,48 @@ int main() {
         // Get the pos that is relative to the game world and snapped to the grid according to multiple
         SDL_Point snappedPos = {.x = round(relPos.x / multiple) * multiple, .y = round(relPos.y / multiple) * multiple};
 
-        if (pos.x != lastPos.x && pos.y != lastPos.y) { // Check that the mouse has moved since the last frame
-            if ((buttons & SDL_BUTTON_LMASK) != 0) {
+        SDL_bool leftClick = ((buttons & SDL_BUTTON_LMASK) != 0);
+        SDL_bool rightClick = ((buttons & SDL_BUTTON_RMASK) != 0);
+
+
+        // Check if we clicked on a button
+        if (event.type == SDL_MOUSEBUTTONDOWN && leftClick) { // Check for left click, not hold
+        // TODO make the mouse input system actually good
+            SDL_Point tPos = {.x = relPos.x, .y = relPos.y - 1};
+            // IT STANDS FOR TEMP POS I SWEAR GUYS OKAY PLEASE AHH
+
+            chip *c;
+            HASH_FIND(hh, chips, &tPos, sizeof(SDL_Point), c);
+            // We do this find by hand instead of with the function because that looks at every pixel in the
+            // chip and we only want one pixel
+
+            if (c != NULL && c->type == BUTTON) {
+                pixel *p = find_pixel(tPos);
+                if (p != NULL) {
+                    // c->memory[0] != c->memory[0];
+                    if (c->memory[0] == SDL_TRUE) { c->memory[0] = SDL_FALSE; } else { c->memory[0] = SDL_TRUE; }
+                    recursive_change_pixel_state(p, c->memory[0]);
+                }
+            }
+        }
+
+        // Check that the mouse has moved since the last time we did an action
+        if (pos.x != lastPos.x && pos.y != lastPos.y) {
+            if (leftClick) {
                 // Place pixels
                 for (int ix = 0; ix < multiple; ix++) { for (int iy = 0; iy < multiple; iy++) {
                     insert_pixel((SDL_Point){.x = snappedPos.x + ix, .y = snappedPos.y + iy}, DEFAULT_PIXEL_COLOR);
                 } }
-            } else if ((buttons & SDL_BUTTON_RMASK) != 0) {
+
+                lastPos = pos;
+            } else if (rightClick) {
                 // Delete pixels
                 for (int ix = 0; ix < multiple; ix++) { for (int iy = 0; iy < multiple; iy++) {
                     delete_pixel((SDL_Point){.x = snappedPos.x + ix, .y = snappedPos.y + iy});
                 } }
-            }
 
-            lastPos = pos;
+                lastPos = pos;
+            }
         }
 
 
